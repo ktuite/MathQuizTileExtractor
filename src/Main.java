@@ -26,7 +26,6 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 
 		String filename = "scan2.png";
 		int crop_x, crop_y, crop_width, crop_height;
@@ -41,6 +40,8 @@ public class Main {
 				{952,122},
 				{940,184},
 			};
+		
+		// hand-entered coordinates... pretty sloppy, doens't leave room for padding around box
 		
 		float[][] default_box1 = new float[][]{ // clockwise from top left
 				{84, 70},
@@ -80,29 +81,8 @@ public class Main {
 				int y = (int) (pt.getY() + crop_y);
 				System.out.println(x + "," + y);
 			}
-			
-			/*
-			// try some affine transform stuff
-			System.out.println("wheres the half coming from? "  + pts[1].getX() + "," + crop_x +", " + default_qr[1][0]);
-			double tx = pts[1].getX() + crop_x - default_qr[1][0];
-			double ty = pts[1].getY() + crop_y - default_qr[1][1];
-			double sx = 1;
-			double sy = 1;
-			double r = 0.02;
-			double a = Math.cos(r) * sx;
-			double b = -1 * Math.sin(r) * sx;
-			double c = Math.sin(r) * sy;
-			double d = Math.cos(r) * sy;
-			double e = Math.cos(r) * tx + Math.sin(r) * ty;
-			double f = -1 * Math.sin(r) * tx + Math.cos(r) * ty;
-			AffineTransform xform = new AffineTransform(a,b,c,d,e,f);
-			
-			System.out.println("tx, ty: " + tx + "," + ty);
-			System.out.println("sx, sy: " + sx + "," + sy);
-			System.out.println("rot: " + r);
-			System.out.println("affine: " + xform);
-			*/
-			
+
+			// Use two hand-constructed transforms to get the final affine transformation
 			AffineTransform orig = new AffineTransform();
 			orig.setTransform(default_qr[2][0] - default_qr[1][0], default_qr[2][1] - default_qr[1][1], 
 					default_qr[0][0] - default_qr[1][0], default_qr[0][1] - default_qr[1][1],
@@ -126,7 +106,7 @@ public class Main {
 			// Draw found location of QR code on image
 			Graphics2D g = bufImg.createGraphics();
 			
-			
+			// draw stuff on the qr code
 			g.setColor(Color.RED);
 			g.setStroke(new BasicStroke(10));
 			g.drawLine((int) pts[0].getX() + crop_x, (int) pts[0].getY() + crop_y,
@@ -135,6 +115,7 @@ public class Main {
 					(int) pts[1].getX() + crop_x, (int) pts[1].getY() + crop_y);
 			
 			
+			// draw upper left box
 			g.setColor(Color.BLUE);
 			g.transform(orig_to_scan);
 			g.drawLine((int) default_box1[0][0], (int) default_box1[0][1],
@@ -142,6 +123,7 @@ public class Main {
 			g.drawLine((int) default_box1[2][0], (int) default_box1[2][1],
 					(int) default_box1[1][0], (int) default_box1[1][1]);
 			
+			// draw middle right box
 			g.drawLine((int) default_box2[0][0], (int) default_box2[0][1],
 					(int) default_box2[1][0], (int) default_box2[1][1]);
 			g.drawLine((int) default_box2[2][0], (int) default_box2[2][1],
@@ -150,9 +132,13 @@ public class Main {
 			
 			g.dispose();
 			
+			// save marked up image of test for some reason
 			File outputfile = new File("saved.png");
 			ImageIO.write(bufImg, "png", outputfile);
 
+			
+			
+			// try to extract the middle, right box  (default_box2)
 			int IMG_WIDTH = (int) (default_box2[1][0] - default_box2[0][0]);
 			int IMG_HEIGHT = (int) (default_box2[2][1] - default_box2[0][1]);
 			
@@ -164,7 +150,6 @@ public class Main {
 			gTile.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 			
 			orig_to_scan.invert();
-			//gTile.transform(orig_to_scan);
 			gTile.translate(-default_box2[0][0], -default_box2[0][1]);
 			gTile.drawImage(bufImg, orig_to_scan, null);
 			gTile.dispose();
@@ -172,7 +157,6 @@ public class Main {
 			File tileFile = new File("tilefile.png");
 			ImageIO.write(eqTile, "png", tileFile);
 			
-			System.out.println("Done");
 
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
